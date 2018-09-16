@@ -149,10 +149,3 @@ wiring = [
 station = Station()
 station.wire_and_run(wiring)
 
-#lpk = MidiDevice("lpk", 1)
-#modeld = MidiDevice("modeld", 2)
-
-#lpk.forward_messages(modeld, all_channels)
-#while 1:
-#    time.sleep(10)
-
