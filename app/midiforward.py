@@ -142,7 +142,7 @@ all_channels = AllChannels()
 
 wiring = [
     ('lpk25', all_channels, 'model d'),
-    (exact('Arturia BeatStep Pro:Arturia BeatStep Pro MIDI 1 32:0'), 1, 'model d'),
+    ('Arturia BeatStep Pro MIDI 1', 1, 'model d'),
     ('unknown input', all_channels, 'model d')
 ]
 
