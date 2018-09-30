@@ -210,7 +210,7 @@ class WebPage:
         raise cherrypy.HTTPRedirect('/')
 
 
-cherrypy.config.update('server.conf')
+cherrypy.config.update(os.path.join(os.path.dirname(__file__), 'server.conf'))
 index = os.path.abspath(os.path.join(os.path.dirname(__file__), "index.html"))
 cherrypy.quickstart(WebPage(), '/', {
     '/' : {
