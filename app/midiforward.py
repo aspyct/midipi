@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 
+import cherrypy
 import rtmidi
 import time
 import sys
+import os.path
+
+from rtmidi.midiconstants import (
+        ALL_SOUND_OFF,
+        ALL_NOTES_OFF,
+        CONTROL_CHANGE,
+        RESET_ALL_CONTROLLERS
+)
 
 class AllChannels:
     def __eq__(self, channel):
@@ -60,11 +69,42 @@ class MidiDevice:
             if channel == midi_channel + 1:
                 output.send_message(message)
 
+    def close(self):
+        if self.input is not None:
+            self.input.close_port()
+            self.input = None
+
+        if self.output is not None:
+            self.output.send_message([CONTROL_CHANGE, ALL_SOUND_OFF, 0])
+            self.output.send_message([CONTROL_CHANGE, ALL_NOTES_OFF, 0])
+            self.output.send_message([CONTROL_CHANGE, RESET_ALL_CONTROLLERS, 0])
+            self.output.close_port()
+            self.output = None
+
 
 class Station:
     def __init__(self):
-        self.input_devices = None
-        self.output_devices = None
+        self.input_devices = []
+        self.output_devices = []
+
+    def reset(self):
+        for in_d in self.input_devices:
+            in_d.close()
+        self.input_devices = []
+
+        for out_d in self.output_devices:
+            out_d.close()
+        self.output_devices = []
+
+    def panic(self):
+        midi_out = rtmidi.MidiOut()
+        
+        for portnum, portname in enumerate(midi_out.get_ports()):
+            midi_out.open_port(portnum)
+            midi_out.send_message([CONTROL_CHANGE, ALL_SOUND_OFF, 0])
+            midi_out.send_message([CONTROL_CHANGE, ALL_NOTES_OFF, 0])
+            midi_out.send_message([CONTROL_CHANGE, RESET_ALL_CONTROLLERS, 0])
+            midi_out.close_port()
 
     def wire(self, wiring):
         input_device_list = self.__discover_input_devices()
@@ -94,6 +134,8 @@ class Station:
             wire_list.append((input_device, output_device, channel))
 
         for (in_d, out_d, chan) in wire_list:
+            self.input_devices.append(in_d)
+            self.output_devices.append(out_d)
             in_d.forward_messages(out_d, chan)
 
     def wire_and_run(self, wiring):
@@ -147,5 +189,32 @@ wiring = [
 ]
 
 station = Station()
-station.wire_and_run(wiring)
+station.wire(wiring)
 
+
+class WebPage:
+    @cherrypy.expose
+    def rewire(self):
+        station.reset()
+        station.wire(wiring)
+        raise cherrypy.HTTPRedirect('/')
+
+    @cherrypy.expose
+    def stop(self):
+        station.reset()
+        raise cherrypy.HTTPRedirect('/')
+
+    @cherrypy.expose
+    def panic(self):
+        station.panic()
+        raise cherrypy.HTTPRedirect('/')
+
+
+cherrypy.config.update('server.conf')
+index = os.path.abspath(os.path.join(os.path.dirname(__file__), "index.html"))
+cherrypy.quickstart(WebPage(), '/', {
+    '/' : {
+        'tools.staticfile.on' : True,
+        'tools.staticfile.filename': index
+    }
+})
