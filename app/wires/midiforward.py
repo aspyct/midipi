@@ -185,7 +185,10 @@ all_channels = AllChannels()
 wiring = [
     ('lpk25', all_channels, 'model d'),
     ('Arturia BeatStep Pro MIDI 1', 1, 'model d'),
-    ('unknown input', all_channels, 'model d')
+    ('unknown input', all_channels, 'model d'),
+    ('lpk25', all_channels, 'looper in'),
+    ('looper out', all_channels, 'model d'),
+    ('midipad', all_channels, 'looper in')
 ]
 
 station = Station()

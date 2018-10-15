@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import curses
 import rtmidi
@@ -7,8 +7,8 @@ from rtmidi.midiconstants import CONTROL_CHANGE
 
 MIDI_NAME = "MidiPad"
 MIDI_CHANNEL = 0
-TRACK_SELECTED = 0x01
-ENTER = 0x02
+ENTER = 0x01
+TRACK_SELECTED = 0x02
 
 
 class MidiPad:
