@@ -72,16 +72,19 @@ class MidiPad:
         self.midi_out.send_message(message)
 
 
-def main_with_stdscr(stdscr):
+def main_with_stdscr(stdscr, when_ready):
     midi_out = rtmidi.MidiOut()
     midi_out.open_virtual_port(MIDI_NAME)
+
+    if when_ready is not None:
+        when_ready()
 
     pad = MidiPad(stdscr, midi_out, MIDI_CHANNEL)
     pad.run()
 
 
-def main():
-    curses.wrapper(main_with_stdscr)
+def main(when_ready=None):
+    curses.wrapper(main_with_stdscr, when_ready)
 
 
 if __name__ == '__main__':

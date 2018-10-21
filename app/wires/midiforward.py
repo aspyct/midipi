@@ -5,6 +5,7 @@ import rtmidi
 import time
 import sys
 import os.path
+import signal
 
 from rtmidi.midiconstants import (
         ALL_SOUND_OFF,
@@ -86,6 +87,7 @@ class Station:
     def __init__(self):
         self.input_devices = []
         self.output_devices = []
+        self.last_wiring = None
 
     def reset(self):
         for in_d in self.input_devices:
@@ -106,7 +108,16 @@ class Station:
             midi_out.send_message([CONTROL_CHANGE, RESET_ALL_CONTROLLERS, 0])
             midi_out.close_port()
 
+    def rewire(self, wiring):
+        if self.last_wiring is None:
+            raise ValueError("No wiring set")
+
+        self.reset()
+        self.wire(self.last_wiring)
+
     def wire(self, wiring):
+        self.last_wiring = wiring
+
         input_device_list = self.__discover_input_devices()
         output_device_list = self.__discover_output_devices()
 
@@ -183,8 +194,7 @@ class WebPage:
 
     @cherrypy.expose
     def rewire(self):
-        self.station.reset()
-        self.station.wire(wiring)
+        self.station.rewire(wiring)
         raise cherrypy.HTTPRedirect('/')
 
     @cherrypy.expose
@@ -217,6 +227,8 @@ wiring = [
 def main():
     station = Station()
     station.wire(wiring)
+
+    signal.signal(signal.SIGHUP, station.rewire)
 
     cherrypy.config.update(os.path.join(os.path.dirname(__file__), 'server.conf'))
     index = os.path.abspath(os.path.join(os.path.dirname(__file__), "index.html"))
