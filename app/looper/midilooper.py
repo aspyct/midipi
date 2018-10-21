@@ -94,8 +94,7 @@ class Looper:
         if not (0 <= selection < len(self.tracks)):
             print("Not a valid track: {}".format(selection), file=sys.stderr)
             return
-
-        if self.current_recorder is not None:
+        elif self.current_recorder is not None:
             # We're recording. Selecting a track sets the desired slot
             self.selected_track = selection
         else:
