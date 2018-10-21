@@ -72,7 +72,7 @@ class MidiPad:
         self.midi_out.send_message(message)
 
 
-def main(stdscr):
+def main_with_stdscr(stdscr):
     midi_out = rtmidi.MidiOut()
     midi_out.open_virtual_port(MIDI_NAME)
 
@@ -80,5 +80,9 @@ def main(stdscr):
     pad.run()
 
 
+def main():
+    curses.wrapper(main_with_stdscr)
+
+
 if __name__ == '__main__':
-    curses.wrapper(main)
+    main()

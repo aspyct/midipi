@@ -176,6 +176,29 @@ class Station:
 # Configuration #
 #################
 
+
+class WebPage:
+    def __init__(self, station):
+        self.station = station
+
+    @cherrypy.expose
+    def rewire(self):
+        self.station.reset()
+        self.station.wire(wiring)
+        raise cherrypy.HTTPRedirect('/')
+
+    @cherrypy.expose
+    def stop(self):
+        self.station.reset()
+        raise cherrypy.HTTPRedirect('/')
+
+    @cherrypy.expose
+    def panic(self):
+        self.station.panic()
+        raise cherrypy.HTTPRedirect('/')
+
+
+
 # TODO Default configuration should just be to wire every input to every output
 # TODO Also it should watch usb ports for new inputs
 
@@ -190,33 +213,20 @@ wiring = [
     ('midipad', all_channels, 'looper in')
 ]
 
-station = Station()
-station.wire(wiring)
+
+def main():
+    station = Station()
+    station.wire(wiring)
+
+    cherrypy.config.update(os.path.join(os.path.dirname(__file__), 'server.conf'))
+    index = os.path.abspath(os.path.join(os.path.dirname(__file__), "index.html"))
+    cherrypy.quickstart(WebPage(station), '/', {
+        '/' : {
+            'tools.staticfile.on' : True,
+            'tools.staticfile.filename': index
+        }
+    })
 
 
-class WebPage:
-    @cherrypy.expose
-    def rewire(self):
-        station.reset()
-        station.wire(wiring)
-        raise cherrypy.HTTPRedirect('/')
-
-    @cherrypy.expose
-    def stop(self):
-        station.reset()
-        raise cherrypy.HTTPRedirect('/')
-
-    @cherrypy.expose
-    def panic(self):
-        station.panic()
-        raise cherrypy.HTTPRedirect('/')
-
-
-cherrypy.config.update(os.path.join(os.path.dirname(__file__), 'server.conf'))
-index = os.path.abspath(os.path.join(os.path.dirname(__file__), "index.html"))
-cherrypy.quickstart(WebPage(), '/', {
-    '/' : {
-        'tools.staticfile.on' : True,
-        'tools.staticfile.filename': index
-    }
-})
+if __name__ == '__main__':
+    main()
