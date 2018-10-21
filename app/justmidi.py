@@ -16,7 +16,7 @@ def main():
     wires_proc.start()  # Looks like cherrypy hates to run without stdin...
 
     def rewire():
-        os.kill(wires_proc.pid, signal.SIGHUP)
+        os.kill(wires_proc.pid, signal.SIGUSR1)
 
     try:
         keypad.main(rewire)

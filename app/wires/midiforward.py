@@ -228,7 +228,10 @@ def main():
     station = Station()
     station.wire(wiring)
 
-    signal.signal(signal.SIGHUP, station.rewire)
+    def handle_sigusr1(*_):
+        station.rewire()
+
+    signal.signal(signal.SIGUSR1, handle_sigusr1)
 
     cherrypy.config.update(os.path.join(os.path.dirname(__file__), 'server.conf'))
     index = os.path.abspath(os.path.join(os.path.dirname(__file__), "index.html"))
