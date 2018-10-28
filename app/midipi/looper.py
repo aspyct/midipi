@@ -202,5 +202,10 @@ def main():
     looper.run_forever()
 
 
+def multiprocess(stdouterr_file):
+    sys.stdout = sys.stderr = open(stdouterr_file, 'w')
+    main()
+
+
 if __name__ == '__main__':
     main()

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import cherrypy
 import rtmidi
 import time
 import sys
@@ -149,9 +148,7 @@ class Station:
             self.output_devices.append(out_d)
             in_d.forward_messages(out_d, chan)
 
-    def wire_and_run(self, wiring):
-        self.wire(wiring)
-
+    def run_forever(self):
         try:
             while 1:
                 time.sleep(10)
@@ -187,28 +184,6 @@ class Station:
 # Configuration #
 #################
 
-
-class WebPage:
-    def __init__(self, station):
-        self.station = station
-
-    @cherrypy.expose
-    def rewire(self):
-        self.station.rewire(wiring)
-        raise cherrypy.HTTPRedirect('/')
-
-    @cherrypy.expose
-    def stop(self):
-        self.station.reset()
-        raise cherrypy.HTTPRedirect('/')
-
-    @cherrypy.expose
-    def panic(self):
-        self.station.panic()
-        raise cherrypy.HTTPRedirect('/')
-
-
-
 # TODO Default configuration should just be to wire every input to every output
 # TODO Also it should watch usb ports for new inputs
 
@@ -231,17 +206,20 @@ def main():
     def handle_sigusr1(*_):
         station.rewire()
 
-    signal.signal(signal.SIGUSR1, handle_sigusr1)
+    def handle_sigusr2(*_):
+        station.panic()
 
-    cherrypy.config.update(os.path.join(os.path.dirname(__file__), 'server.conf'))
-    index = os.path.abspath(os.path.join(os.path.dirname(__file__), "index.html"))
-    cherrypy.quickstart(WebPage(station), '/', {
-        '/' : {
-            'tools.staticfile.on' : True,
-            'tools.staticfile.filename': index
-        }
-    })
+    signal.signal(signal.SIGUSR1, handle_sigusr1)
+    signal.signal(signal.SIGUSR2, handle_sigusr2)
+
+    station.run_forever()
+
+
+def multiprocess(stdouterr_file):
+    sys.stdin = sys.stderr = open(stdouterr_file, 'w')
+    main()
 
 
 if __name__ == '__main__':
     main()
+
